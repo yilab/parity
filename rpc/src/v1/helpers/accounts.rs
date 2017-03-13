@@ -17,11 +17,15 @@
 use std::sync::{Arc, Weak};
 
 use ethcore::account_provider::AccountProvider;
-use jsonrpc_core::Error;
+use jsonrpc_core::{Error, ErrorCode};
 
 pub fn unwrap_provider(provider: &Option<Weak<AccountProvider>>) -> Result<Arc<AccountProvider>, Error> {
 	match *provider {
 		Some(ref weak) => weak.upgrade().ok_or_else(Error::internal_error),
-		None => Err(Error::invalid_request()),
+		None => Err(Error {
+			code: ErrorCode::InvalidRequest,
+			message: "Method disallowed when running parity with --web-server.".into(),
+			data: None,
+		}),
 	}
 }
