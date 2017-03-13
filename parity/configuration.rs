@@ -128,6 +128,7 @@ impl Configuration {
 			Some(true) if pruning == Pruning::Specific(Algorithm::Archive) => writeln!(&mut stderr(), "Warning: Warp Sync is disabled because pruning mode is set to archive").expect("Error writing to stderr"),
 			_ => {},
 		};
+		let web_server = self.args.flag_web_server;
 		let warp_sync = !self.args.flag_no_warp && fat_db != Switch::On && tracing != Switch::On && pruning != Pruning::Specific(Algorithm::Archive);
 		let geth_compatibility = self.args.flag_geth;
 		let ui_address = self.ui_port().map(|port| (self.ui_interface(), port));
@@ -360,6 +361,7 @@ impl Configuration {
 				wal: wal,
 				vm_type: vm_type,
 				warp_sync: warp_sync,
+				web_server: web_server,
 				geth_compatibility: geth_compatibility,
 				ui_address: ui_address,
 				net_settings: self.network_settings(),
