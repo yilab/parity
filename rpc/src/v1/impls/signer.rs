@@ -52,7 +52,7 @@ impl<D: Dispatcher + 'static> SignerClient<D> {
 		}
 	}
 
-	fn accounts(&self) -> Result<Arc<AccountProvider>, Error> {
+	fn account_provider(&self) -> Result<Arc<AccountProvider>, Error> {
 		unwrap_provider(&self.accounts)
 	}
 
@@ -65,7 +65,7 @@ impl<D: Dispatcher + 'static> SignerClient<D> {
 		let dispatcher = self.dispatcher.clone();
 
 		let setup = || {
-			Ok((self.accounts()?, take_weak!(self.signer)))
+			Ok((self.account_provider()?, take_weak!(self.signer)))
 		};
 
 		let (accounts, signer) = match setup() {

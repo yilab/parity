@@ -134,6 +134,8 @@ impl<C, SN: ?Sized, S: ?Sized, M, EM> EthClient<C, SN, S, M, EM> where
 		}
 	}
 
+	/// Attempt to get the `Arc<AccountProvider>`, errors if provider was not
+	/// set, or if upgrading the weak reference failed.
 	fn account_provider(&self) -> Result<Arc<AccountProvider>, Error> {
 		unwrap_provider(&self.accounts)
 	}

@@ -36,6 +36,11 @@ build_rpc_trait! {
 	pub trait Parity {
 		type Metadata;
 
+		/// Returns `true` if Parity was started with `--web-server` flag, forcing the JS client
+		/// to provide accounts from local storage instead of fetching them from RPC.
+		#[rpc(name = "parity_useLocalAccounts")]
+		fn use_local_accounts(&self) -> Result<bool, Error>;
+
 		/// Returns accounts information.
 		#[rpc(name = "parity_accountsInfo")]
 		fn accounts_info(&self, Trailing<DappId>) -> Result<BTreeMap<H160, AccountInfo>, Error>;

@@ -83,12 +83,12 @@ impl<D: Dispatcher + 'static> SigningQueueClient<D> {
 		}
 	}
 
-	fn accounts(&self) -> Result<Arc<AccountProvider>, Error> {
+	fn account_provider(&self) -> Result<Arc<AccountProvider>, Error> {
 		unwrap_provider(&self.accounts)
 	}
 
 	fn dispatch(&self, payload: RpcConfirmationPayload, default_account: DefaultAccount, origin: Origin) -> BoxFuture<DispatchResult, Error> {
-		let accounts = try_bf!(self.accounts());
+		let accounts = try_bf!(self.account_provider());
 		let default_account = match default_account {
 			DefaultAccount::Provided(acc) => acc,
 			DefaultAccount::ForDapp(dapp) => accounts.dapp_default_address(dapp).ok().unwrap_or_default(),

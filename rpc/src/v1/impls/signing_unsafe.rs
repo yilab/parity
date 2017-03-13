@@ -52,12 +52,12 @@ impl<D: Dispatcher + 'static> SigningUnsafeClient<D> {
 		}
 	}
 
-	fn accounts(&self) -> Result<Arc<AccountProvider>, Error> {
+	fn account_provider(&self) -> Result<Arc<AccountProvider>, Error> {
 		unwrap_provider(&self.accounts)
 	}
 
 	fn handle(&self, payload: RpcConfirmationPayload, account: DefaultAccount) -> BoxFuture<RpcConfirmationResponse, Error> {
-		let accounts = try_bf!(self.accounts());
+		let accounts = try_bf!(self.account_provider());
 		let default = match account {
 			DefaultAccount::Provided(acc) => acc,
 			DefaultAccount::ForDapp(dapp) => accounts.dapp_default_address(dapp).ok().unwrap_or_default(),

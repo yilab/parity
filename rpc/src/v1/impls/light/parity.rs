@@ -80,6 +80,10 @@ impl ParityClient {
 impl Parity for ParityClient {
 	type Metadata = Metadata;
 
+	fn use_local_accounts(&self) -> Result<bool, Error> {
+		Ok(false)
+	}
+
 	fn accounts_info(&self, dapp: Trailing<DappId>) -> Result<BTreeMap<H160, AccountInfo>, Error> {
 		let dapp = dapp.0;
 

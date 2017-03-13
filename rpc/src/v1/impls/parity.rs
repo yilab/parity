@@ -106,7 +106,7 @@ impl<C, M, S: ?Sized, U> ParityClient<C, M, S, U> where
 
 	/// Attempt to get the `Arc<AccountProvider>`, errors if provider was not
 	/// set, or if upgrading the weak reference failed.
-	fn accounts(&self) -> Result<Arc<AccountProvider>, Error> {
+	fn account_provider(&self) -> Result<Arc<AccountProvider>, Error> {
 		unwrap_provider(&self.accounts)
 	}
 }
@@ -119,10 +119,14 @@ impl<C, M, S: ?Sized, U> Parity for ParityClient<C, M, S, U> where
 {
 	type Metadata = Metadata;
 
+	fn use_local_accounts(&self) -> Result<bool, Error> {
+		Ok(self.accounts.is_none())
+	}
+
 	fn accounts_info(&self, dapp: Trailing<DappId>) -> Result<BTreeMap<H160, AccountInfo>, Error> {
 		let dapp = dapp.0;
 
-		let store = self.accounts()?;
+		let store = self.account_provider()?;
 		let dapp_accounts = store
 			.note_dapp_used(dapp.clone().into())
 			.and_then(|_| store.dapp_addresses(dapp.into()))
@@ -142,7 +146,7 @@ impl<C, M, S: ?Sized, U> Parity for ParityClient<C, M, S, U> where
 	}
 
 	fn hardware_accounts_info(&self) -> Result<BTreeMap<H160, HwAccountInfo>, Error> {
-		let store = self.accounts()?;
+		let store = self.account_provider()?;
 		let info = store.hardware_accounts_info().map_err(|e| errors::account("Could not fetch account info.", e))?;
 		Ok(info
 			.into_iter()
@@ -154,7 +158,7 @@ impl<C, M, S: ?Sized, U> Parity for ParityClient<C, M, S, U> where
 	fn default_account(&self, meta: Self::Metadata) -> BoxFuture<H160, Error> {
 		let dapp_id = meta.dapp_id();
 		future::ok(
-			try_bf!(self.accounts())
+			try_bf!(self.account_provider())
 				.dapp_default_address(dapp_id.into())
 				.map(Into::into)
 				.ok()
