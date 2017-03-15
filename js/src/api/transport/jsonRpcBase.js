@@ -23,6 +23,7 @@ export default class JsonRpcBase extends EventEmitter {
     this._id = 1;
     this._debug = false;
     this._connected = false;
+    this._middleware = Promise.resolve([]);
   }
 
   encode (method, params) {
@@ -34,6 +35,41 @@ export default class JsonRpcBase extends EventEmitter {
     });
 
     return json;
+  }
+
+  addMiddleware (handlerPromise) {
+    this._middleware = Promise
+      .all([
+        handlerPromise,
+        this._middleware
+      ])
+      .then(([handler, middleware]) => {
+        // Do nothing if `handlerPromise` resolves to a null-y value.
+        if (handler == null) {
+          return middleware;
+        }
+
+        // don't mutate the original array
+        return middleware.concat([handler]);
+      });
+  }
+
+  execute (method, ...params) {
+    return this._middleware.then((middleware) => {
+      for (const handler of middleware) {
+        const result = handler(method, params);
+
+        if (result != null) {
+          return result;
+        }
+      }
+
+      return this._execute(method, params);
+    });
+  }
+
+  _execute () {
+    throw new Error('Missing implementation of JsonRpcBase#_execute');
   }
 
   _setConnected () {

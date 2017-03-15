@@ -69,11 +69,19 @@ export default class AccountStore {
   loadAccounts () {
     this.setLoading(true);
 
-    return Promise
-      .all([
-        this._api.parity.getNewDappsAddresses(),
-        this._api.parity.allAccountsInfo()
-      ])
+    return this._api.parity.useLocalAccounts()
+      .then((useLocalAccounts) => {
+        if (useLocalAccounts) {
+          console.log('Using local storage for accounts!');
+
+          return [[], []];
+        }
+
+        return Promise.all([
+          this._api.parity.getNewDappsAddresses(),
+          this._api.parity.allAccountsInfo()
+        ]);
+      })
       .then(([whitelist, allAccounts]) => {
         transaction(() => {
           const accounts = Object

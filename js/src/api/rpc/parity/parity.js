@@ -502,6 +502,11 @@ export default class Parity {
       .then(outNumber);
   }
 
+  useLocalAccounts () {
+    return this._transport
+      .execute('parity_useLocalAccounts');
+  }
+
   unsignedTransactionsCount () {
     return this._transport
       .execute('parity_unsignedTransactionsCount')
