@@ -32,6 +32,7 @@ class Account {
   constructor (address, name) {
     this._address = address;
     this._name = name;
+    this._meta = '{}';
   }
 
   get address () {
@@ -42,12 +43,26 @@ class Account {
     return this._name;
   }
 
-  fromPhrase (phrase, password) {
+  set name (name) {
+    this._name = name;
+  }
+
+  get meta () {
+    return this._meta;
+  }
+
+  set meta (meta) {
+    this._meta = meta;
+  }
+
+  static fromPhrase (phrase, password) {
     return new Account(randomAddress(), '');
   }
 }
 
 const accounts = [];
+
+console.log(accounts);
 
 const handlers = {
   eth_accounts () {
@@ -55,7 +70,7 @@ const handlers = {
   },
 
   eth_coinbase () {
-    return NULL_ADDRESS;
+    return handlers.parity_defaultAccount();
   },
 
   parity_accountsInfo () {
@@ -68,7 +83,11 @@ const handlers = {
     return result;
   },
 
-  parity_defautAccount () {
+  parity_allAccountsInfo () {
+    return handlers.parity_accountsInfo();
+  },
+
+  parity_defaultAccount () {
     if (accounts.length === 0) {
       return NULL_ADDRESS;
     }
@@ -83,13 +102,41 @@ const handlers = {
   parity_newAccountFromPhrase ([phrase, password]) {
     console.log('Create account from phrase', phrase, password);
 
-    return NULL_ADDRESS;
+    const account = Account.fromPhrase(phrase, password);
+
+    accounts.push(account);
+
+    return account.address;
+  },
+
+  parity_setAccountMeta ([address, meta]) {
+    const account = accounts.find((account) => address === account.address);
+
+    if (account) {
+      account.meta = meta;
+    }
+
+    return true;
+  },
+
+  parity_setAccountName ([address, name]) {
+    const account = accounts.find((account) => address === account.address);
+
+    if (account) {
+      account.name = name;
+    }
+
+    return true;
   }
 };
 
 export default function localAccountsHandler (method, params) {
   if (method in handlers) {
-    return handlers[method](params);
+    const response = handlers[method](params);
+
+    console.log(method, params, '=>', response);
+
+    return response;
   }
 
   return null;
