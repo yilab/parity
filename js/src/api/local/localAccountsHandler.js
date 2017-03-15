@@ -14,8 +14,83 @@
 // You should have received a copy of the GNU General Public License
 // along with Parity.  If not, see <http://www.gnu.org/licenses/>.
 
+const HEX = '0123456789abcdef';
+
+function randomAddress () {
+  let address = '0x';
+
+  for (let i = 0; i < 40; i++) {
+    address += HEX[Math.random() * 16 | 0];
+  }
+
+  return address;
+}
+
+const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
+
+class Account {
+  constructor (address, name) {
+    this._address = address;
+    this._name = name;
+  }
+
+  get address () {
+    return this._address;
+  }
+
+  get name () {
+    return this._name;
+  }
+
+  fromPhrase (phrase, password) {
+    return new Account(randomAddress(), '');
+  }
+}
+
+const accounts = [];
+
+const handlers = {
+  eth_accounts () {
+    return accounts.map((account) => account.address);
+  },
+
+  eth_coinbase () {
+    return NULL_ADDRESS;
+  },
+
+  parity_accountsInfo () {
+    let result = {};
+
+    for (const { address, name } of accounts) {
+      result[address] = { name };
+    }
+
+    return result;
+  },
+
+  parity_defautAccount () {
+    if (accounts.length === 0) {
+      return NULL_ADDRESS;
+    }
+
+    return accounts[0].address;
+  },
+
+  parity_hardwareAccountsInfo () {
+    return {};
+  },
+
+  parity_newAccountFromPhrase ([phrase, password]) {
+    console.log('Create account from phrase', phrase, password);
+
+    return NULL_ADDRESS;
+  }
+};
+
 export default function localAccountsHandler (method, params) {
-  console.log('localAccountsHandler', method, params);
+  if (method in handlers) {
+    return handlers[method](params);
+  }
 
   return null;
 }
