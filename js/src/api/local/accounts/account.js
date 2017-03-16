@@ -17,11 +17,19 @@
 import { randomUUID, randomAddress } from './util';
 
 export default class Account {
-  constructor (address, name) {
-    this._address = address;
+  constructor (accounts, data) {
+    const {
+      name,
+      address = randomAddress(),
+      meta = {},
+      uuid = randomUUID()
+    } = data;
+
+    this._accounts = accounts;
     this._name = name;
-    this._meta = {};
-    this._uuid = randomUUID();
+    this._address = address;
+    this._meta = meta;
+    this._uuid = uuid;
   }
 
   get address () {
@@ -48,9 +56,18 @@ export default class Account {
     return this._uuid;
   }
 
-  static fromPhrase (phrase, password) {
-    const account = new Account(randomAddress(), '');
+  static fromPhrase (accounts, phrase, password) {
+    const account = new Account(accounts, {});
 
     return account;
+  }
+
+  toJSON () {
+    return {
+      name: this._name,
+      address: this._address,
+      meta: this._meta,
+      uuid: this._uuid
+    };
   }
 }

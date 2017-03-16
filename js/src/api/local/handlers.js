@@ -14,49 +14,31 @@
 // You should have received a copy of the GNU General Public License
 // along with Parity.  If not, see <http://www.gnu.org/licenses/>.
 
-import { accounts, Account } from './accounts';
-
-const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
-
-function defaultAccount () {
-  if (accounts.length === 0) {
-    return NULL_ADDRESS;
-  }
-
-  return accounts[0].address;
-}
+import accounts from './accounts';
 
 export default {
   'eth_accounts' () {
-    return accounts.map((account) => account.address);
+    return accounts.mapArray((account) => account.address);
   },
 
   'eth_coinbase' () {
-    return defaultAccount();
+    return accounts.lastUsed();
   },
 
   'parity_accountsInfo' () {
-    let result = {};
-
-    for (const { address, name } of accounts) {
-      result[address] = { name };
-    }
-
-    return result;
+    return accounts.mapObject(({ name }) => {
+      return { name }
+    });
   },
 
   'parity_allAccountsInfo' () {
-    let result = {};
-
-    for (const { address, name, meta, uuid } of accounts) {
-      result[address] = { name, meta, uuid };
-    }
-
-    return result;
+    return accounts.mapObject(({ name, meta, uuid }) => {
+      return { name, meta, uuid };
+    });
   },
 
   'parity_defaultAccount' () {
-    return defaultAccount();
+    return accounts.lastUsed();
   },
 
   'parity_getNewDappsAddresses' () {
@@ -68,33 +50,17 @@ export default {
   },
 
   'parity_newAccountFromPhrase' ([phrase, password]) {
-    const account = Account.fromPhrase(phrase, password);
-
-    accounts.push(account);
-
-    return account.address;
+    return accounts.createFromPhrase(phrase, password);
   },
 
   'parity_setAccountMeta' ([address, meta]) {
-    const account = accounts.find((account) => address === account.address);
-
-    if (account == null) {
-      throw new Error(`Account not found: ${address}`);
-    }
-
-    account.meta = meta;
+    accounts.get(address).meta = meta;
 
     return true;
   },
 
   'parity_setAccountName' ([address, name]) {
-    const account = accounts.find((account) => address === account.address);
-
-    if (account == null) {
-      throw new Error(`Account not found: ${address}`);
-    }
-
-    account.name = name;
+    accounts.get(address).name = name;
 
     return true;
   },
@@ -112,13 +78,7 @@ export default {
   },
 
   'parity_killAccount' ([address, password]) {
-    const index = accounts.findIndex((account) => account.address === address);
-
-    if (index === -1) {
-      return false;
-    }
-
-    accounts.splice(index, 1);
+    accounts.remove(address);
 
     return true;
   }
