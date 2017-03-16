@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Parity.  If not, see <http://www.gnu.org/licenses/>.
 
-import * as handlers from './handlers';
+import handlers from './handlers';
 
 export default function localAccountsHandler (method, params) {
   if (method in handlers) {

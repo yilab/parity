@@ -18,35 +18,7 @@ import { accounts, Account } from './accounts';
 
 const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
 
-export function eth_accounts () {
-  return accounts.map((account) => account.address);
-}
-
-export function eth_coinbase () {
-  return parity_defaultAccount();
-}
-
-export function parity_accountsInfo () {
-  let result = {};
-
-  for (const { address, name } of accounts) {
-    result[address] = { name };
-  }
-
-  return result;
-}
-
-export function parity_allAccountsInfo () {
-    let result = {};
-
-  for (const { address, name, meta, uuid } of accounts) {
-    result[address] = { name, meta, uuid };
-  }
-
-  return result;
-}
-
-export function parity_defaultAccount () {
+function defaultAccount () {
   if (accounts.length === 0) {
     return NULL_ADDRESS;
   }
@@ -54,66 +26,100 @@ export function parity_defaultAccount () {
   return accounts[0].address;
 }
 
-export function parity_getNewDappsAddresses () {
-  return [];
-}
+export default {
+  'eth_accounts' () {
+    return accounts.map((account) => account.address);
+  },
 
-export function parity_hardwareAccountsInfo () {
-  return {};
-}
+  'eth_coinbase' () {
+    return defaultAccount();
+  },
 
-export function parity_newAccountFromPhrase ([phrase, password]) {
-  const account = Account.fromPhrase(phrase, password);
+  'parity_accountsInfo' () {
+    let result = {};
 
-  accounts.push(account);
+    for (const { address, name } of accounts) {
+      result[address] = { name };
+    }
 
-  return account.address;
-}
+    return result;
+  },
 
-export function parity_setAccountMeta ([address, meta]) {
-  const account = accounts.find((account) => address === account.address);
+  'parity_allAccountsInfo' () {
+      let result = {};
 
-  if (account == null) {
-    throw new Error(`Account not found: ${address}`);
+    for (const { address, name, meta, uuid } of accounts) {
+      result[address] = { name, meta, uuid };
+    }
+
+    return result;
+  },
+
+  'parity_defaultAccount' () {
+    return defaultAccount();
+  },
+
+  'parity_getNewDappsAddresses' () {
+    return [];
+  },
+
+  'parity_hardwareAccountsInfo' () {
+    return {};
+  },
+
+  'parity_newAccountFromPhrase' ([phrase, password]) {
+    const account = Account.fromPhrase(phrase, password);
+
+    accounts.push(account);
+
+    return account.address;
+  },
+
+  'parity_setAccountMeta' ([address, meta]) {
+    const account = accounts.find((account) => address === account.address);
+
+    if (account == null) {
+      throw new Error(`Account not found: ${address}`);
+    }
+
+    account.meta = meta;
+
+    return true;
+  },
+
+  'parity_setAccountName' ([address, name]) {
+    const account = accounts.find((account) => address === account.address);
+
+    if (account == null) {
+      throw new Error(`Account not found: ${address}`);
+    }
+
+    account.name = name;
+
+    return true;
+  },
+
+  'parity_useLocalAccounts' () {
+    return true;
+  },
+
+  'parity_listGethAccounts' () {
+    return [];
+  },
+
+  'parity_listRecentDapps' () {
+    return {};
+  },
+
+  'parity_killAccount' ([address, password]) {
+    const index = accounts.findIndex((account) => account.address === address);
+
+    if (index === -1) {
+      return false;
+    }
+
+    accounts.splice(index, 1);
+
+    return true;
   }
-
-  account.meta = meta;
-
-  return true;
-}
-
-export function parity_setAccountName ([address, name]) {
-  const account = accounts.find((account) => address === account.address);
-
-  if (account == null) {
-    throw new Error(`Account not found: ${address}`);
-  }
-
-  account.name = name;
-
-  return true;
-}
-
-export function parity_useLocalAccounts () {
-  return true;
-}
-
-export function parity_listGethAccounts () {
-  return [];
-}
-
-export function parity_listRecentDapps () {
-  return {};
-}
-
-export function parity_killAccount ([address, password]) {
-  const index = accounts.findIndex((account) => account.address === address);
-
-  if (index === -1) {
-    return false;
-  }
-
-  accounts.splice(index, 1);
-
-  return true;
 }
