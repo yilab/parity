@@ -15,6 +15,7 @@
 // along with Parity.  If not, see <http://www.gnu.org/licenses/>.
 
 import EventEmitter from 'eventemitter3';
+import { Logging } from '../subscriptions';
 
 export default class JsonRpcBase extends EventEmitter {
   constructor () {
@@ -54,13 +55,26 @@ export default class JsonRpcBase extends EventEmitter {
       });
   }
 
+  _wrapHandlerResult (result) {
+    return {
+      id: this._id,
+      jsonrpc: '2.0',
+      result
+    };
+  }
+
   execute (method, ...params) {
     return this._middleware.then((middleware) => {
       for (const handler of middleware) {
-        const result = handler(method, params);
+        const res = handler(method, params);
 
-        if (result != null) {
-          return result;
+        if (res != null) {
+          const result = this._wrapHandlerResult(res);
+          const json = this.encode(method, params);
+
+          Logging.send(method, params, { json, result });
+
+          return res;
         }
       }
 
