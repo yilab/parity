@@ -23,7 +23,7 @@ import { Db, Eth, Parity, Net, Personal, Shh, Signer, Trace, Web3 } from './rpc'
 import Subscriptions from './subscriptions';
 import util from './util';
 import { isFunction } from './util/types';
-import { localAccountsHandler } from './local';
+import { middleware as localAccountsMiddleware } from './local';
 
 export default class Api extends EventEmitter {
   constructor (transport) {
@@ -47,11 +47,11 @@ export default class Api extends EventEmitter {
 
     this._subscriptions = new Subscriptions(this);
 
-    const handler = this.parity
+    const middleware = this.parity
       .useLocalAccounts()
-      .then((useLocalAccounts) => useLocalAccounts ? localAccountsHandler : null);
+      .then((useLocalAccounts) => useLocalAccounts ? localAccountsMiddleware : null);
 
-    transport.addMiddleware(handler);
+    transport.addMiddleware(middleware);
   }
 
   get db () {

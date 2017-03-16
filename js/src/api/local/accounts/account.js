@@ -17,7 +17,7 @@
 import { randomUUID, randomAddress } from './util';
 
 export default class Account {
-  constructor (accounts, data) {
+  constructor (persist, data) {
     const {
       name,
       address = randomAddress(),
@@ -25,7 +25,7 @@ export default class Account {
       uuid = randomUUID()
     } = data;
 
-    this._accounts = accounts;
+    this._persist = persist;
     this._name = name;
     this._address = address;
     this._meta = meta;
@@ -42,6 +42,8 @@ export default class Account {
 
   set name (name) {
     this._name = name;
+
+    this._persist();
   }
 
   get meta () {
@@ -50,14 +52,16 @@ export default class Account {
 
   set meta (meta) {
     this._meta = JSON.parse(meta);
+
+    this._persist();
   }
 
   get uuid () {
     return this._uuid;
   }
 
-  static fromPhrase (accounts, phrase, password) {
-    const account = new Account(accounts, {});
+  static fromPhrase (persist, phrase, password) {
+    const account = new Account(persist, {});
 
     return account;
   }

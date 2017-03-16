@@ -16,7 +16,7 @@
 
 import handlers from './handlers';
 
-export default function localAccountsHandler (method, params) {
+export default function middleware (method, params) {
   if (method in handlers) {
     const response = handlers[method](params);
 

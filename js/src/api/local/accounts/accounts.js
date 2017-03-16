@@ -18,22 +18,41 @@ import Account from './account';
 
 const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
 
-export default class Accounts {
-  constructor (data = []) {
-    this._last = NULL_ADDRESS;
-    this._store = data.map((data) => new Account(data));
+const LOCAL_STORAGE_KEY = '_parity::localAccounts';
+
+function fromLocalStorage () {
+  const json = window.localStorage.getItem(LOCAL_STORAGE_KEY);
+
+  if (json == null) {
+    return {};
   }
 
-  add (account) {
-    this._store.push(account);
-    this._last = account.address;
+  return JSON.parse(json);
+}
+
+function toLocalStorage (data) {
+  window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
+}
+
+export default class Accounts {
+  constructor (data = fromLocalStorage()) {
+    const {
+      last = NULL_ADDRESS,
+      store = []
+    } = data;
+
+    this._persistTimer = null;
+    this._last = last;
+    this._store = store.map((data) => new Account(this.persist, data));
   }
 
   createFromPhrase (phrase, password) {
-    const account = Account.fromPhrase(this, phrase, password);
+    const account = Account.fromPhrase(this.persist, phrase, password);
 
     this._store.push(account);
     this._last = account.address;
+
+    this.persist();
 
     return account.address;
   }
@@ -67,6 +86,8 @@ export default class Accounts {
 
     this._store.splice(index, 1);
 
+    this.persist();
+
     return true;
   }
 
@@ -82,5 +103,21 @@ export default class Accounts {
     });
 
     return result;
+  }
+
+  toJSON () {
+    return {
+      last: this._last,
+      store: this._store
+    };
+  }
+
+  persist = () => {
+    clearTimeout(this._persistTimer);
+
+    // Throttle persisting the accounts
+    this._persistTimer = setTimeout(() => {
+      toLocalStorage(this);
+    }, 100);
   }
 }
