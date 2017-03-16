@@ -46,7 +46,7 @@ export default {
   },
 
   'parity_allAccountsInfo' () {
-      let result = {};
+    let result = {};
 
     for (const { address, name, meta, uuid } of accounts) {
       result[address] = { name, meta, uuid };
@@ -122,4 +122,4 @@ export default {
 
     return true;
   }
-}
+};
