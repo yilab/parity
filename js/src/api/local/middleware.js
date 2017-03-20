@@ -14,14 +14,83 @@
 // You should have received a copy of the GNU General Public License
 // along with Parity.  If not, see <http://www.gnu.org/licenses/>.
 
-import handlers from './handlers';
+import accounts from './accounts';
+import { Middleware } from '../transport';
 
-export default function middleware (method, params) {
-  if (method in handlers) {
-    const response = handlers[method](params);
+export default class LocalAccountsMiddleware extends Middleware {
+  constructor (transport) {
+    super(transport);
 
-    return response;
+    const register = this.register.bind(this);
+
+    register('eth_accounts', () => {
+      return accounts.mapArray((account) => account.address);
+    });
+
+    register('eth_coinbase', () => {
+      return accounts.lastUsed();
+    });
+
+    register('parity_accountsInfo', () => {
+      return accounts.mapObject(({ name }) => {
+        return { name };
+      });
+    });
+
+    register('parity_allAccountsInfo', () => {
+      return accounts.mapObject(({ name, meta, uuid }) => {
+        return { name, meta, uuid };
+      });
+    });
+
+    register('parity_defaultAccount', () => {
+      return accounts.lastUsed();
+    });
+
+    register('parity_getNewDappsAddresses', () => {
+      return [];
+    });
+
+    register('parity_hardwareAccountsInfo', () => {
+      return {};
+    });
+
+    register('parity_newAccountFromPhrase', ([phrase, password]) => {
+      return this
+        .rpcRequest('parity_phraseToWallet', [phrase])
+        .then((wallet) => {
+          return accounts.create(wallet, password);
+        });
+    });
+
+    register('parity_setAccountMeta', ([address, meta]) => {
+      accounts.get(address).meta = meta;
+
+      return true;
+    });
+
+    register('parity_setAccountName', ([address, name]) => {
+      accounts.get(address).name = name;
+
+      return true;
+    });
+
+    register('parity_useLocalAccounts', () => {
+      return true;
+    });
+
+    register('parity_listGethAccounts', () => {
+      return [];
+    });
+
+    register('parity_listRecentDapps', () => {
+      return {};
+    });
+
+    register('parity_killAccount', ([address, password]) => {
+      accounts.remove(address);
+
+      return true;
+    });
   }
-
-  return null;
 }

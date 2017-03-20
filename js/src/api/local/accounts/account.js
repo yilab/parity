@@ -15,21 +15,32 @@
 // along with Parity.  If not, see <http://www.gnu.org/licenses/>.
 
 import { randomUUID, randomAddress } from './util';
+import { sha3 } from '../../util/sha3';
 
 export default class Account {
   constructor (persist, data) {
     const {
-      name,
       address = randomAddress(),
+      publicKey,
+      secretKey,
+      password = '',
+      name,
       meta = {},
       uuid = randomUUID()
     } = data;
 
     this._persist = persist;
-    this._name = name;
     this._address = address;
+    this._publicKey = publicKey;
+    this._secretKey = secretKey;
+    this._password = password;
+    this._name = name;
     this._meta = meta;
     this._uuid = uuid;
+  }
+
+  isValidPassword (password) {
+    return this._password === sha3(password);
   }
 
   get address () {
@@ -60,16 +71,26 @@ export default class Account {
     return this._uuid;
   }
 
-  static fromPhrase (persist, phrase, password) {
-    const account = new Account(persist, {});
+  static fromWallet (persist, wallet, password) {
+    const data = {
+      address: wallet.address,
+      publicKey: wallet.public,
+      secretKey: wallet.secret,
+      password: sha3(password)
+    };
+
+    const account = new Account(persist, data);
 
     return account;
   }
 
   toJSON () {
     return {
-      name: this._name,
       address: this._address,
+      publicKey: this._publicKey,
+      secretKey: this._secretKey,
+      password: this._password,
+      name: this._name,
       meta: this._meta,
       uuid: this._uuid
     };

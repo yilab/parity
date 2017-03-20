@@ -40,7 +40,7 @@ use v1::types::{
 	TransactionStats, LocalTransactionStatus,
 	BlockNumber, ConsensusCapability, VersionInfo,
 	OperationsInfo, DappId, ChainStatus,
-	AccountInfo, HwAccountInfo
+	AccountInfo, HwAccountInfo, Wallet,
 };
 
 /// Parity implementation for light client.
@@ -216,6 +216,10 @@ impl Parity for ParityClient {
 
 	fn phrase_to_address(&self, phrase: String) -> Result<H160, Error> {
 		Ok(Brain::new(phrase).generate().unwrap().address().into())
+	}
+
+	fn phrase_to_wallet(&self, phrase: String) -> Result<Wallet, Error> {
+		Ok(Brain::new(phrase).generate().unwrap().into())
 	}
 
 	fn list_accounts(&self, _: u64, _: Option<H160>, _: Trailing<BlockNumber>) -> Result<Option<Vec<H160>>, Error> {

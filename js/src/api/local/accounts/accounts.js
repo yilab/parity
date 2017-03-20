@@ -46,8 +46,8 @@ export default class Accounts {
     this._store = store.map((data) => new Account(this.persist, data));
   }
 
-  createFromPhrase (phrase, password) {
-    const account = Account.fromPhrase(this.persist, phrase, password);
+  create (wallet, password) {
+    const account = Account.fromWallet(this.persist, wallet, password);
 
     this._store.push(account);
     this._last = account.address;

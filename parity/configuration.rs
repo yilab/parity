@@ -1168,6 +1168,7 @@ mod tests {
 			ipc_conf: Default::default(),
 			net_conf: default_network_config(),
 			network_id: None,
+			web_server: false,
 			warp_sync: true,
 			acc_conf: Default::default(),
 			gas_pricer: Default::default(),

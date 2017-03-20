@@ -23,7 +23,7 @@ import { Db, Eth, Parity, Net, Personal, Shh, Signer, Trace, Web3 } from './rpc'
 import Subscriptions from './subscriptions';
 import util from './util';
 import { isFunction } from './util/types';
-import { middleware as localAccountsMiddleware } from './local';
+import { LocalAccountsMiddleware } from './local';
 
 export default class Api extends EventEmitter {
   constructor (transport) {
@@ -49,7 +49,13 @@ export default class Api extends EventEmitter {
 
     const middleware = this.parity
       .useLocalAccounts()
-      .then((useLocalAccounts) => useLocalAccounts ? localAccountsMiddleware : null);
+      .then((useLocalAccounts) => {
+        if (useLocalAccounts) {
+          return new LocalAccountsMiddleware(transport);
+        }
+
+        return null;
+      });
 
     transport.addMiddleware(middleware);
   }
