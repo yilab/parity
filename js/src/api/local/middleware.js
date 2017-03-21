@@ -14,8 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with Parity.  If not, see <http://www.gnu.org/licenses/>.
 
+import EthereumTx from 'ethereumjs-tx';
 import accounts from './accounts';
 import { Middleware } from '../transport';
+import { toHex } from '../util/format';
+
+// Maps transaction requests to transaction hashes.
+// This allows the locally-signed transactions to emulate the signer.
+const transactions = {};
+
+// Current transaction id. This doesn't need to be stored, as it's
+// only relevant for the current the session.
+let transactionId = 1;
 
 export default class LocalAccountsMiddleware extends Middleware {
   constructor (transport) {
@@ -41,6 +51,10 @@ export default class LocalAccountsMiddleware extends Middleware {
       return accounts.mapObject(({ name, meta, uuid }) => {
         return { name, meta, uuid };
       });
+    });
+
+    register('parity_checkRequest', ([id]) => {
+      return transactions[id] || null;
     });
 
     register('parity_defaultAccount', () => {
@@ -73,6 +87,44 @@ export default class LocalAccountsMiddleware extends Middleware {
       accounts.get(address).name = name;
 
       return true;
+    });
+
+    register('parity_postTransaction', ([transaction]) => {
+      const {
+        from = accounts.lastUsed(),
+        gas: gasLimit,
+        gasPrice,
+        to,
+        value,
+        data
+      } = transaction;
+
+      return this
+        .rpcRequest('parity_nextNonce', [from])
+        .then((nonce) => {
+          const account = accounts.get(from);
+          const tx = new EthereumTx({
+            nonce,
+            gasLimit,
+            gasPrice,
+            to,
+            value,
+            data
+          });
+
+          tx.sign(account.privateKey);
+
+          const serializedTx = `0x${tx.serialize().toString('hex')}`;
+
+          return this.rpcRequest('eth_sendRawTransaction', [serializedTx]);
+        })
+        .then((hash) => {
+          const id = toHex(transactionId++);
+
+          transactions[id] = hash;
+
+          return id;
+        });
     });
 
     register('parity_useLocalAccounts', () => {

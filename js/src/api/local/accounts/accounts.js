@@ -17,7 +17,6 @@
 import Account from './account';
 
 const NULL_ADDRESS = '0x0000000000000000000000000000000000000000';
-
 const LOCAL_STORAGE_KEY = '_parity::localAccounts';
 
 function fromLocalStorage () {

@@ -22,7 +22,7 @@ export default class Account {
     const {
       address = randomAddress(),
       publicKey,
-      secretKey,
+      privateKey,
       password = '',
       name,
       meta = {},
@@ -32,7 +32,7 @@ export default class Account {
     this._persist = persist;
     this._address = address;
     this._publicKey = publicKey;
-    this._secretKey = secretKey;
+    this._privateKey = privateKey;
     this._password = password;
     this._name = name;
     this._meta = meta;
@@ -71,11 +71,15 @@ export default class Account {
     return this._uuid;
   }
 
+  get privateKey () {
+    return Buffer.from(this._privateKey.slice(2), 'hex');
+  }
+
   static fromWallet (persist, wallet, password) {
     const data = {
       address: wallet.address,
       publicKey: wallet.public,
-      secretKey: wallet.secret,
+      privateKey: wallet.secret,
       password: sha3(password)
     };
 
@@ -88,7 +92,7 @@ export default class Account {
     return {
       address: this._address,
       publicKey: this._publicKey,
-      secretKey: this._secretKey,
+      privateKey: this._privateKey,
       password: this._password,
       name: this._name,
       meta: this._meta,
