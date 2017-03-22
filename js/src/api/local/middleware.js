@@ -71,9 +71,10 @@ export default class LocalAccountsMiddleware extends Middleware {
     });
 
     register('parity_newAccountFromPhrase', ([phrase, password]) => {
-      const wallet = phraseToWallet(phrase);
-
-      return accounts.create(wallet, password);
+      return phraseToWallet(phrase)
+        .then((wallet) => {
+          return accounts.create(wallet, password);
+        });
     });
 
     register('parity_setAccountMeta', ([address, meta]) => {

@@ -14,47 +14,23 @@
 // You should have received a copy of the GNU General Public License
 // along with Parity.  If not, see <http://www.gnu.org/licenses/>.
 
-import { keccak_256 as keccak256 } from 'js-sha3';
-import secp256k1 from 'secp256k1/js';
-
-console.log('secp256k1', secp256k1);
-
-function bytesToHex (bytes) {
-  return '0x' + Array.from(bytes).map(n => ('0' + n.toString(16)).slice(-2)).join('');
-}
+import Worker from 'worker-loader!./worker';
 
 export function phraseToAddress (phrase) {
-  return phraseToWallet(phrase).address;
+  return phraseToWallet(phrase).then((wallet) => wallet.address);
 }
 
 // Logic ported from /ethkey/src/brain.rs
 export function phraseToWallet (phrase) {
-  let secret = keccak256.array(phrase);
+  const start = Date.now();
 
-  for (let i = 0; i < 16384; i++) {
-    secret = keccak256.array(secret);
-  }
+  return new Promise((resolve, reject) => {
+    const worker = new Worker();
 
-  while (true) {
-    secret = keccak256.array(secret);
-
-    const secretBuf = Buffer.from(secret);
-
-    if (secp256k1.privateKeyVerify(secretBuf)) {
-      const publicBuf = secp256k1.publicKeyCreate(secretBuf, false).slice(-64);
-      const address = keccak256.array(publicBuf).slice(12);
-
-      if (address[0] !== 0) {
-        continue;
-      }
-
-      const result = {
-        secret: bytesToHex(secretBuf),
-        public: bytesToHex(publicBuf),
-        address: bytesToHex(address)
-      };
-
-      return result;
-    }
-  }
+    worker.postMessage(phrase);
+    worker.onmessage = (event) => {
+      console.log('worker done in', Date.now() - start);
+      resolve(event.data);
+    };
+  });
 }
