@@ -22,10 +22,9 @@ export function phraseToAddress (phrase) {
 
 // Logic ported from /ethkey/src/brain.rs
 export function phraseToWallet (phrase) {
-  const start = Date.now();
-
   return new Promise((resolve, reject) => {
     const worker = new Worker();
+    const start = Date.now();
 
     worker.postMessage(phrase);
     worker.onmessage = (event) => {

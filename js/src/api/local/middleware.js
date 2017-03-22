@@ -16,6 +16,7 @@
 
 import EthereumTx from 'ethereumjs-tx';
 import accounts from './accounts';
+import dictionary from './dictionary';
 import { Middleware } from '../transport';
 import { toHex } from '../util/format';
 import { phraseToWallet, phraseToAddress } from './ethkey';
@@ -27,6 +28,22 @@ const transactions = {};
 // Current transaction id. This doesn't need to be stored, as it's
 // only relevant for the current the session.
 let transactionId = 1;
+
+function randomWord () {
+  const index = Math.random() * dictionary.length | 0;
+
+  return dictionary[index];
+}
+
+function randomPhrase (length) {
+  const words = [];
+
+  while (length--) {
+    words.push(randomWord());
+  }
+
+  return words.join(' ');
+}
 
 export default class LocalAccountsMiddleware extends Middleware {
   constructor (transport) {
@@ -60,6 +77,10 @@ export default class LocalAccountsMiddleware extends Middleware {
 
     register('parity_defaultAccount', () => {
       return accounts.lastUsed();
+    });
+
+    register('parity_generateSecretPhrase', () => {
+      return randomPhrase(12);
     });
 
     register('parity_getNewDappsAddresses', () => {
