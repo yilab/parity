@@ -18,6 +18,7 @@ import EthereumTx from 'ethereumjs-tx';
 import accounts from './accounts';
 import { Middleware } from '../transport';
 import { toHex } from '../util/format';
+import { phraseToWallet, phraseToAddress } from './ethkey';
 
 // Maps transaction requests to transaction hashes.
 // This allows the locally-signed transactions to emulate the signer.
@@ -70,11 +71,9 @@ export default class LocalAccountsMiddleware extends Middleware {
     });
 
     register('parity_newAccountFromPhrase', ([phrase, password]) => {
-      return this
-        .rpcRequest('parity_phraseToWallet', [phrase])
-        .then((wallet) => {
-          return accounts.create(wallet, password);
-        });
+      const wallet = phraseToWallet(phrase);
+
+      return accounts.create(wallet, password);
     });
 
     register('parity_setAccountMeta', ([address, meta]) => {
@@ -125,6 +124,10 @@ export default class LocalAccountsMiddleware extends Middleware {
 
           return id;
         });
+    });
+
+    register('parity_phraseToAddress', ([phrase]) => {
+      return phraseToAddress(phrase);
     });
 
     register('parity_useLocalAccounts', () => {
