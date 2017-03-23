@@ -46,7 +46,8 @@ export default class Accounts {
   }
 
   create (wallet, password) {
-    const account = Account.fromWallet(this.persist, wallet, password);
+    const privateKey = Buffer.from(wallet.secret.slice(2), 'hex');
+    const account = Account.fromPrivateKey(this.persist, privateKey, password);
 
     this._store.push(account);
     this._last = account.address;
@@ -61,6 +62,8 @@ export default class Accounts {
   }
 
   get (address) {
+    address = address.toLowerCase();
+
     this._last = address;
 
     const account = this._store.find((account) => account.address === address);
@@ -73,6 +76,8 @@ export default class Accounts {
   }
 
   remove (address) {
+    address = address.toLowerCase();
+
     const index = this._store.findIndex((account) => account.address === address);
 
     if (index === -1) {

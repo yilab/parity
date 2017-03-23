@@ -19,10 +19,12 @@ import accounts from './accounts';
 import dictionary from './dictionary';
 import { Middleware } from '../transport';
 import { toHex } from '../util/format';
+import { inNumber16 } from '../format/input';
 import { phraseToWallet, phraseToAddress } from './ethkey';
 
 // Maps transaction requests to transaction hashes.
 // This allows the locally-signed transactions to emulate the signer.
+const transactionHashes = {};
 const transactions = {};
 
 // Current transaction id. This doesn't need to be stored, as it's
@@ -72,7 +74,7 @@ export default class LocalAccountsMiddleware extends Middleware {
     });
 
     register('parity_checkRequest', ([id]) => {
-      return transactions[id] || null;
+      return transactionHashes[id] || Promise.resolve(null);
     });
 
     register('parity_defaultAccount', () => {
@@ -111,41 +113,38 @@ export default class LocalAccountsMiddleware extends Middleware {
     });
 
     register('parity_postTransaction', ([transaction]) => {
-      const {
-        from = accounts.lastUsed(),
-        gas: gasLimit,
-        gasPrice,
-        to,
-        value,
-        data
-      } = transaction;
+      if (transaction.from == null) {
+        transaction.from = accounts.lastUsed();
+      }
 
-      return this
-        .rpcRequest('parity_nextNonce', [from])
-        .then((nonce) => {
-          const account = accounts.get(from);
-          const tx = new EthereumTx({
-            nonce,
-            gasLimit,
-            gasPrice,
-            to,
-            value,
-            data
-          });
+      transaction.nonce = null;
+      transaction.condition = null;
 
-          tx.sign(account.privateKey);
+      const id = toHex(transactionId++);
 
-          const serializedTx = `0x${tx.serialize().toString('hex')}`;
+      transactions[id] = { sendTransaction: transaction };
 
-          return this.rpcRequest('eth_sendRawTransaction', [serializedTx]);
-        })
-        .then((hash) => {
-          const id = toHex(transactionId++);
+      return id;
 
-          transactions[id] = hash;
+      // return this
+      //   .rpcRequest('parity_nextNonce', [from])
+      //   .then((nonce) => {
+      //     const account = accounts.get(from);
+      //     const tx = new EthereumTx({
+      //       nonce,
+      //       gasLimit,
+      //       gasPrice,
+      //       to,
+      //       value,
+      //       data
+      //     });
 
-          return id;
-        });
+      //     const id = toHex(transactionId++);
+
+      //     tx.sign(account.privateKey);
+      //     const serializedTx = `0x${tx.serialize().toString('hex')}`;
+      //     return this.rpcRequest('eth_sendRawTransaction', [serializedTx]);
+      //   });
     });
 
     register('parity_phraseToAddress', ([phrase]) => {
@@ -168,6 +167,57 @@ export default class LocalAccountsMiddleware extends Middleware {
       accounts.remove(address);
 
       return true;
+    });
+
+    register('signer_confirmRequest', ([id, modify, password]) => {
+      const {
+        gasPrice,
+        gas: gasLimit,
+        from,
+        to,
+        value,
+        data
+      } = Object.assign(transactions[id].sendTransaction, modify);
+
+      return this
+        .rpcRequest('parity_nextNonce', [from])
+        .then((nonce) => {
+          const tx = new EthereumTx({
+            nonce,
+            to,
+            data,
+            gasLimit: inNumber16(gasLimit),
+            gasPrice: inNumber16(gasPrice),
+            value: inNumber16(value)
+          });
+          const account = accounts.get(from);
+
+          tx.sign(account.decryptPrivateKey(password));
+
+          const serializedTx = `0x${tx.serialize().toString('hex')}`;
+
+          return this.rpcRequest('eth_sendRawTransaction', [serializedTx]);
+        })
+        .then((hash) => {
+          console.log('hash', hash);
+
+          delete transactions[id];
+
+          transactionHashes[id] = hash;
+
+          return {};
+        });
+    });
+
+    register('signer_requestsToConfirm', () => {
+      return Object.keys(transactions).map((id) => {
+        return {
+          id,
+          origin: {},
+          payload: transactions[id]
+        };
+      });
+      // {"id":"0x1","origin":{"signer":"0x5eca04dfb2540c6d491bcf8c95d541033d32ff8c1eb53d9d5ad8b539404deedd"},"payload":{"sendTransaction":{"condition":null,"data":"0x","from":"0x00a329c0648769a73afac7f9381e08fb43dbea72","gas":"0x5208","gasPrice":"0x0","nonce":null,"to":"0x003dd508237dd9784497b651beebea1a0841a402","value":"0x3635c9adc5dea00000"}}}
     });
   }
 }

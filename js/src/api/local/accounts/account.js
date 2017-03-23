@@ -14,37 +14,36 @@
 // You should have received a copy of the GNU General Public License
 // along with Parity.  If not, see <http://www.gnu.org/licenses/>.
 
-import { randomUUID, randomAddress } from './util';
-import { sha3 } from '../../util/sha3';
+import 'keythereum/dist/keythereum'; // browser build
+
+// Keythereum binds itself to global scope
+const { keythereum } = window;
 
 export default class Account {
   constructor (persist, data) {
     const {
-      address = randomAddress(),
-      publicKey,
-      privateKey,
-      password = '',
-      name,
+      keyObject,
       meta = {},
-      uuid = randomUUID()
+      name = ''
     } = data;
 
     this._persist = persist;
-    this._address = address;
-    this._publicKey = publicKey;
-    this._privateKey = privateKey;
-    this._password = password;
+    this._keyObject = keyObject;
     this._name = name;
     this._meta = meta;
-    this._uuid = uuid;
   }
 
   isValidPassword (password) {
-    return this._password === sha3(password);
+    try {
+      keythereum.recover(password, this._keyObject);
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   get address () {
-    return this._address;
+    return `0x${this._keyObject.address.toLowerCase()}`;
   }
 
   get name () {
@@ -68,35 +67,34 @@ export default class Account {
   }
 
   get uuid () {
-    return this._uuid;
+    return this._keyObject.id;
   }
 
-  get privateKey () {
-    return Buffer.from(this._privateKey.slice(2), 'hex');
+  decryptPrivateKey (password) {
+    return keythereum.recover(password, this._keyObject);
   }
 
-  static fromWallet (persist, wallet, password) {
-    const data = {
-      address: wallet.address,
-      publicKey: wallet.public,
-      privateKey: wallet.secret,
-      password: sha3(password)
-    };
+  static fromPrivateKey (persist, key, password) {
+    const iv = keythereum.crypto.randomBytes(16);
+    const salt = keythereum.crypto.randomBytes(32);
 
-    const account = new Account(persist, data);
+    // Keythereum will fail if `password` is an empty string
+    password = password || 'null';
+
+    const keyObject = keythereum.dump(password, key, salt, iv);
+
+    console.log('key object', keyObject);
+
+    const account = new Account(persist, { keyObject });
 
     return account;
   }
 
   toJSON () {
     return {
-      address: this._address,
-      publicKey: this._publicKey,
-      privateKey: this._privateKey,
-      password: this._password,
+      keyObject: this._keyObject,
       name: this._name,
-      meta: this._meta,
-      uuid: this._uuid
+      meta: this._meta
     };
   }
 }
