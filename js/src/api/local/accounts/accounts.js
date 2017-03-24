@@ -45,8 +45,8 @@ export default class Accounts {
     this._store = store.map((data) => new Account(this.persist, data));
   }
 
-  create (wallet, password) {
-    const privateKey = Buffer.from(wallet.secret.slice(2), 'hex');
+  create (secret, password) {
+    const privateKey = Buffer.from(secret.slice(2), 'hex');
     const account = Account.fromPrivateKey(this.persist, privateKey, password);
 
     this._store.push(account);

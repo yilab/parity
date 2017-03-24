@@ -28,7 +28,7 @@ use v1::types::{
 	TransactionStats, LocalTransactionStatus,
 	BlockNumber, ConsensusCapability, VersionInfo,
 	OperationsInfo, DappId, ChainStatus,
-	AccountInfo, HwAccountInfo, Wallet,
+	AccountInfo, HwAccountInfo,
 };
 
 build_rpc_trait! {
@@ -121,10 +121,6 @@ build_rpc_trait! {
 		/// Returns whatever address would be derived from the given phrase if it were to seed a brainwallet.
 		#[rpc(name = "parity_phraseToAddress")]
 		fn phrase_to_address(&self, String) -> Result<H160, Error>;
-
-		/// Generates a set of address, private and public key from a phrase.
-		#[rpc(name = "parity_phraseToWallet")]
-		fn phrase_to_wallet(&self, String) -> Result<Wallet, Error>;
 
 		/// Returns the value of the registrar for this network.
 		#[rpc(name = "parity_registryAddress")]

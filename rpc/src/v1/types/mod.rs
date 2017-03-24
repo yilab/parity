@@ -40,7 +40,6 @@ mod transaction;
 mod transaction_request;
 mod transaction_condition;
 mod uint;
-mod wallet;
 mod work;
 
 pub use self::account_info::{AccountInfo, HwAccountInfo};
@@ -73,4 +72,3 @@ pub use self::transaction_request::TransactionRequest;
 pub use self::transaction_condition::TransactionCondition;
 pub use self::uint::{U128, U256};
 pub use self::work::Work;
-pub use self::wallet::Wallet;

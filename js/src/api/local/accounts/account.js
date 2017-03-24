@@ -35,7 +35,7 @@ export default class Account {
 
   isValidPassword (password) {
     try {
-      keythereum.recover(password, this._keyObject);
+      keythereum.recover(Buffer.from(password), this._keyObject);
       return true;
     } catch (e) {
       return false;
@@ -71,7 +71,7 @@ export default class Account {
   }
 
   decryptPrivateKey (password) {
-    return keythereum.recover(password, this._keyObject);
+    return keythereum.recover(Buffer.from(password), this._keyObject);
   }
 
   static fromPrivateKey (persist, key, password) {
@@ -79,11 +79,9 @@ export default class Account {
     const salt = keythereum.crypto.randomBytes(32);
 
     // Keythereum will fail if `password` is an empty string
-    password = password || 'null';
+    password = Buffer.from(password);
 
     const keyObject = keythereum.dump(password, key, salt, iv);
-
-    console.log('key object', keyObject);
 
     const account = new Account(persist, { keyObject });
 
