@@ -14,8 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Parity.  If not, see <http://www.gnu.org/licenses/>.
 
-import Worker from 'worker-loader!./worker';
 import dictionary from './dictionary';
+
+// Allow a web worker in the browser, with a fallback for Node.js
+const hasWebWorkers = typeof Worker !== 'undefined';
+const KeyWorker = hasWebWorkers ? require('worker-loader!./worker')
+                                : require('./worker').KeyWorker;
 
 export function phraseToAddress (phrase) {
   return phraseToWallet(phrase).then((wallet) => wallet.address);
@@ -23,18 +27,17 @@ export function phraseToAddress (phrase) {
 
 export function phraseToWallet (phrase) {
   return new Promise((resolve, reject) => {
-    const worker = new Worker();
-    const start = Date.now();
+    const worker = new KeyWorker();
 
     worker.postMessage(phrase);
-    worker.onmessage = (event) => {
-      console.log('worker done in', Date.now() - start);
-      resolve(event.data);
+    worker.onmessage = ({ data }) => {
+      resolve(data);
     };
   });
 }
 
 export function randomWord () {
+  // TODO mh: use better entropy
   const index = Math.random() * dictionary.length | 0;
 
   return dictionary[index];

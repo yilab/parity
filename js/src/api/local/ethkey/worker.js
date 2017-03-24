@@ -17,13 +17,18 @@
 import { keccak_256 as keccak256 } from 'js-sha3';
 import secp256k1 from 'secp256k1/js';
 
+// Stay compatible between environments
+if (typeof self === 'undefined') {
+  window.self = window;
+}
+
 function bytesToHex (bytes) {
   return '0x' + Array.from(bytes).map(n => ('0' + n.toString(16)).slice(-2)).join('');
 }
 
 // Logic ported from /ethkey/src/brain.rs
-self.onmessage = function (event) {
-  let secret = keccak256.array(event.data);
+function phraseToWallet (phrase) {
+  let secret = keccak256.array(phrase);
 
   for (let i = 0; i < 16384; i++) {
     secret = keccak256.array(secret);
@@ -43,17 +48,40 @@ self.onmessage = function (event) {
         continue;
       }
 
-      const result = {
+      const wallet = {
         secret: bytesToHex(secretBuf),
         public: bytesToHex(publicBuf),
         address: bytesToHex(address)
       };
 
-      postMessage(result);
-      close();
-
-      // should be unreachable
-      break;
+      return wallet;
     }
   }
+}
+
+self.onmessage = function ({ data }) {
+  const wallet = phraseToWallet(data);
+
+  postMessage(wallet);
+  close();
 };
+
+// Emulate a web worker in Node.js
+class KeyWorker {
+  postMessage (data) {
+    // Force async
+    setTimeout(() => {
+      const wallet = phraseToWallet(data);
+
+      this.onmessage({ data: wallet });
+    }, 0);
+  }
+
+  onmessage (event) {
+    // no-op to be overriden
+  }
+}
+
+if (exports != null) {
+  exports.KeyWorker = KeyWorker;
+}
