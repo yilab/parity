@@ -21,8 +21,14 @@ const hasWebWorkers = typeof Worker !== 'undefined';
 const KeyWorker = hasWebWorkers ? require('worker-loader!./worker')
                                 : require('./worker').KeyWorker;
 
-export const keythereum = hasWebWorkers ? require('keythereum/dist/keythereum')
-                                        : require('keythereum');
+// Local accounts should never be used outside of the browser
+export let keythereum = {};
+
+if (hasWebWorkers) {
+  require('keythereum/dist/keythereum');
+
+  keythereum = window.keythereum;
+}
 
 export function phraseToAddress (phrase) {
   return phraseToWallet(phrase).then((wallet) => wallet.address);

@@ -326,7 +326,7 @@ impl ParityAccounts for ParityAccountsClient {
 
 	fn export_account(&self, addr: RpcH160, password: String) -> Result<KeyFile, Error> {
 		let addr = addr.into();
-		take_weak!(self.accounts)
+		self.account_provider()?
 			.export_account(
 				&addr,
 				password,

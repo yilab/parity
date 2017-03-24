@@ -47,23 +47,19 @@ export default class Api extends EventEmitter {
 
     this._subscriptions = new Subscriptions(this);
 
-    const middleware = this.parity.useLocalAccounts();
-
-    if (middleware) {
-      // if (!middleware) {
-      //   console.log('wtf', transport);
-      //   console.log(middleware);
-      //   process.exit(1);
-      // }
-      transport.addMiddleware(
-        middleware.then((useLocalAccounts) => {
+    // Doing a request here in test env would cause an error
+    if (process.env.NODE_ENV !== 'test') {
+      const middleware = this.parity
+        .useLocalAccounts()
+        .then((useLocalAccounts) => {
           if (useLocalAccounts) {
             return new LocalAccountsMiddleware(transport);
           }
 
           return null;
-        })
-      );
+        });
+
+      transport.addMiddleware(middleware);
     }
   }
 
