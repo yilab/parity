@@ -14,10 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Parity.  If not, see <http://www.gnu.org/licenses/>.
 
-import 'keythereum/dist/keythereum'; // browser build
-
-// Keythereum binds itself to global scope
-const { keythereum } = window;
+import { keythereum } from '../ethkey';
 
 export default class Account {
   constructor (persist, data) {

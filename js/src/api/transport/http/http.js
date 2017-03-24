@@ -49,6 +49,8 @@ export default class Http extends JsonRpcBase {
   _execute (method, params) {
     const request = this._encodeOptions(method, params);
 
+    const fetch = fetch || (() => Promise.resolve(null));
+
     return fetch(this._url, request)
       .catch((error) => {
         this._setDisconnected();

@@ -21,6 +21,9 @@ const hasWebWorkers = typeof Worker !== 'undefined';
 const KeyWorker = hasWebWorkers ? require('worker-loader!./worker')
                                 : require('./worker').KeyWorker;
 
+export const keythereum = hasWebWorkers ? require('keythereum/dist/keythereum')
+                                        : require('keythereum');
+
 export function phraseToAddress (phrase) {
   return phraseToWallet(phrase).then((wallet) => wallet.address);
 }

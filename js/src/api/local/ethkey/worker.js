@@ -18,8 +18,10 @@ import { keccak_256 as keccak256 } from 'js-sha3';
 import secp256k1 from 'secp256k1/js';
 
 // Stay compatible between environments
-if (typeof self === 'undefined') {
-  window.self = window;
+if (typeof self !== 'object') {
+  const scope = typeof global === 'undefined' ? window : global;
+
+  scope.self = scope;
 }
 
 function bytesToHex (bytes) {

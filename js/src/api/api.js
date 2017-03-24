@@ -47,17 +47,24 @@ export default class Api extends EventEmitter {
 
     this._subscriptions = new Subscriptions(this);
 
-    const middleware = this.parity
-      .useLocalAccounts()
-      .then((useLocalAccounts) => {
-        if (useLocalAccounts) {
-          return new LocalAccountsMiddleware(transport);
-        }
+    const middleware = this.parity.useLocalAccounts();
 
-        return null;
-      });
+    if (middleware) {
+      // if (!middleware) {
+      //   console.log('wtf', transport);
+      //   console.log(middleware);
+      //   process.exit(1);
+      // }
+      transport.addMiddleware(
+        middleware.then((useLocalAccounts) => {
+          if (useLocalAccounts) {
+            return new LocalAccountsMiddleware(transport);
+          }
 
-    transport.addMiddleware(middleware);
+          return null;
+        })
+      );
+    }
   }
 
   get db () {
