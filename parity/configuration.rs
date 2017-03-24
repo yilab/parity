@@ -22,7 +22,7 @@ use std::cmp::max;
 use cli::{Args, ArgsError};
 use util::{Hashable, H256, U256, Uint, Bytes, version_data, Address};
 use util::journaldb::Algorithm;
-use util::log::Colour;
+use util::Colour;
 use ethsync::{NetworkConfiguration, is_valid_node_url, AllowIP};
 use ethcore::ethstore::ethkey::Secret;
 use ethcore::client::{VMType};
@@ -524,6 +524,7 @@ impl Configuration {
 			tx_queue_strategy: to_queue_strategy(&self.args.flag_tx_queue_strategy)?,
 			pending_set: to_pending_set(&self.args.flag_relay_set)?,
 			reseal_min_period: Duration::from_millis(reseal_min_period),
+			reseal_max_period: Duration::from_millis(self.args.flag_reseal_max_period),
 			work_queue_size: self.args.flag_work_queue_size,
 			enable_resubmission: !self.args.flag_remove_solved,
 			tx_queue_banning: match self.args.flag_tx_time_limit {
@@ -825,7 +826,7 @@ impl Configuration {
 	}
 
 	fn directories(&self) -> Directories {
-		use util::path;
+		use path;
 
 		let local_path = default_local_path();
 		let base_path = self.args.flag_base_path.as_ref().map_or_else(|| default_data_path(), |s| s.clone());
